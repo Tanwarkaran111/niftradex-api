@@ -90,3 +90,20 @@
     }
   }
 }
+        
+        "/load-sample": {
+          "get": {
+            "operationId": "loadSample",
+            "summary": "Fetch option chain from sample CSV (ATM ±3 strikes)",
+            "responses": {
+              "200": {
+                "description": "Option chain JSON (small sample)"
+              }
+            }
+          }
+        }
+
+      
+    
+  
+
