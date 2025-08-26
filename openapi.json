@@ -1,0 +1,92 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "NifTrade X API", "version": "1.0.0" },
+  "servers": [{ "url": "https://niftradex-api-1.onrender.com" }],
+  "paths": {
+    "/option-chain": {
+      "get": {
+        "operationId": "getOptionChain",
+        "summary": "Fetch option chain for a symbol & expiry",
+        "parameters": [
+          { "name": "symbol", "in": "query", "required": false, "schema": { "type": "string", "default": "NIFTY" } },
+          { "name": "expiry", "in": "query", "required": false, "schema": { "type": "string", "default": "nearest" } }
+        ],
+        "responses": { "200": { "description": "Option chain JSON" } }
+      }
+    },
+    "/metrics": {
+      "post": {
+        "operationId": "postMetrics",
+        "summary": "Compute PCR, max pain, OI walls from a given chain",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OptionChain" } } }
+        },
+        "responses": { "200": { "description": "Metrics JSON" } }
+      }
+    },
+    "/suggest": {
+      "post": {
+        "operationId": "postSuggest",
+        "summary": "Suggest a strategy based on IVP and view",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StrategyInput" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Strategy suggestion JSON" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChainLeg": {
+        "type": "object",
+        "properties": {
+          "strike": { "type": "number" },
+          "type": { "type": "string", "enum": ["CE","PE"] },
+          "ltp": { "type": "number" },
+          "iv": { "type": "number" },
+          "oi": { "type": "integer" },
+          "oi_change": { "type": "integer" },
+          "volume": { "type": "integer" }
+        },
+        "required": ["strike","type","ltp","iv","oi","oi_change","volume"]
+      },
+      "StrikeRow": {
+        "type": "object",
+        "properties": {
+          "strike": { "type": "number" },
+          "call": { "$ref": "#/components/schemas/ChainLeg" },
+          "put": { "$ref": "#/components/schemas/ChainLeg" }
+        },
+        "required": ["strike"]
+      },
+      "OptionChain": {
+        "type": "object",
+        "properties": {
+          "symbol": { "type": "string" },
+          "expiry": { "type": "string" },
+          "spot": { "type": "number" },
+          "rows": { "type": "array", "items": { "$ref": "#/components/schemas/StrikeRow" } }
+        },
+        "required": ["symbol","expiry","spot","rows"]
+      },
+      "StrategyInput": {
+        "type": "object",
+        "properties": {
+          "symbol": { "type": "string", "default": "NIFTY" },
+          "capital": { "type": "number", "default": 100000 },
+          "max_risk_pct": { "type": "number", "default": 1.0 },
+          "view": { "type": "string", "enum": ["bullish","bearish","neutral"], "default": "neutral" },
+          "ivp": { "type": "number", "description": "IV Percentile 0-100", "default": 50 },
+          "chain": { "$ref": "#/components/schemas/OptionChain" }
+        },
+        "required": ["symbol","capital","max_risk_pct","view","ivp","chain"]
+      }
+    }
+  }
+}
